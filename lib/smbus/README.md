@@ -1,23 +1,49 @@
-Low power smbus (i2c) slave counter for attiny13
+SMBUS I2C implementation for attiny13 
 --- 
 
 ## Introduction
 
-This project is a very simple 16 bit counter with i2c interface designed for low power consumation. Most time counter sleeps and counting ticks in async timer mode. It interfaces SMBus protocol to read out counter value
+This library very basic implementation of smbus protocol for attiny13 microcontroller
+It should work pretty good on low speed 100kHz bus, no stretching needed. 
 
-## Usage 
-I used it in my WeatherStation project to count anemometer ticks. This project not intended to run in production environment because it missing some important functions, but it's still good for DIY projects, tested and runs pretty good in my case, capable low consumption and good stability.
+It disigned for low power consumation and may work in sleep mode. INT0 interrupt used to detect start condition and wake-up microcontroller. 
 
-## Compile 
-avr-gcc should be installed to compile this project. 
+*PEC not supported*
 
+## SMBUS Functions:
+**PLEASE NOTE!**  There is some differences from original smbus protocol<br/>
+The device has 2 memory slots for read and write. Smbus command, actually is a mem ptr to read/write operarion.Internal counter always incremented on ACK, so *data* <u>may have multiply bytes</u> in all functions until NACK reached.It means you can read as many bytes as needed for your process<br/>
+Counter always resetted to 0 on Stop condition. 
+
+
+Following smbus functions implemented in firmware.
+
+
+### smbus_read_byte 
 ```
-make && make fuses && make upload
+S Addr Rd [A] [Data] NA P
 ```
+Sends *Data* to host controller.
+### smbus_write_byte
+```
+S Addr Wr [A] Data [A] P
+```
+Reads *Data* from host controller. 
+
+### smbus_read_byte_data/smbus_read_word_data 
+```
+S Addr Wr [A] Comm [A] S Addr Rd [A] [Data] NA P
+```
+Sends *Data* to host controller from specified address. 
+
+### smbus_read_byte_data/smbus_read_word_data 
+```
+S Addr Wr [A] Comm [A] S Addr Rd [A] [Data] NA P
+```
+Reads *Data* from host controller into specified address. 
+
 
 ## Hardware 
-
-CNT - 8bit Timer0 counter pin
 
 SDA - External interrupt pin (wakeups microcontroller for communication)
 
@@ -27,7 +53,7 @@ SCL - Any GPIO pin ( PB0 by default )
        Attiny13a 
         -------          
       -|RST VCC|-         
-      -|PB3 PB2|- CNT        
+      -|PB3 PB2|-         
       -|PB4 PB1|- SDA    
       -|GND PB0|- SCL      
         ------- 
